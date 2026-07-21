@@ -1,0 +1,91 @@
+# MVP
+
+- Epic: Task Due Dates
+  - Story: Add optional due dates to tasks
+    - Acceptance Criteria: A task can be created with a due date in YYYY-MM-DD format.
+    - Acceptance Criteria: A task can be created without a due date.
+    - Technical Requirement: Keep the existing date input in `TaskForm` and store its value as `dueDate` in the frontend task model.
+    - Technical Requirement: Update `TaskList` to read `dueDate` and continue parsing date-only values in local time to avoid UTC date shifts.
+    - Technical Requirement: Add frontend tests for creating tasks with and without a due date.
+- Epic: Task Priorities
+  - Story: Add P1, P2, and P3 priorities to tasks
+    - Acceptance Criteria: A task can have a priority of P1, P2, or P3.
+    - Acceptance Criteria: The task retains its selected priority.
+    - Technical Requirement: Add a Material UI priority selector to `TaskForm` with only P1, P2, and P3 options.
+    - Technical Requirement: Add `priority` to the frontend task model and preserve it through create and edit operations.
+    - Technical Requirement: Display each task's priority in `TaskList` using the existing Material UI component library.
+  - Story: Default new tasks to P3 priority
+    - Acceptance Criteria: A new task is assigned P3 when no priority is selected.
+    - Technical Requirement: Initialize and reset the `TaskForm` priority state to P3 for new tasks.
+    - Technical Requirement: Apply P3 in the frontend task creation path when priority is missing.
+- Epic: Task Validation
+  - Story: Require task titles
+    - Acceptance Criteria: A task with a title can be created.
+    - Acceptance Criteria: A task without a title is not created.
+    - Technical Requirement: Retain the current trimmed-title validation in `TaskForm` before calling the save handler.
+    - Technical Requirement: Validate the title again in the frontend storage layer so blank titles cannot be persisted outside the form path.
+    - Technical Requirement: Add tests that verify whitespace-only titles are rejected and valid titles are stored.
+  - Story: Validate task priorities
+    - Acceptance Criteria: P1, P2, and P3 are accepted as priority values.
+    - Acceptance Criteria: A value other than P1, P2, or P3 is not retained as a task priority.
+    - Technical Requirement: Centralize the allowed priority values in a shared frontend constant used by the form, validation, and sorting logic.
+    - Technical Requirement: Normalize a missing or unsupported priority to P3 before storing a task.
+    - Technical Requirement: Add unit tests for all supported priority values and an unsupported value.
+  - Story: Ignore invalid due dates
+    - Acceptance Criteria: A valid YYYY-MM-DD due date is retained on the task.
+    - Acceptance Criteria: An invalid due date is treated as though no due date was provided.
+    - Technical Requirement: Add a shared frontend date validator that checks both the YYYY-MM-DD shape and calendar validity.
+    - Technical Requirement: Normalize an empty or invalid due date to an absent value before storing a task.
+    - Technical Requirement: Replace the current permissive `TaskForm` date normalization with the shared validator.
+- Epic: Task Filtering
+  - Story: Show all tasks
+    - Acceptance Criteria: Selecting All displays tasks regardless of due date.
+    - Technical Requirement: Add filter state with `all` as the default value and render All, Today, and Overdue controls with Material UI.
+    - Technical Requirement: Return the complete task collection when the active filter is `all`.
+  - Story: Show tasks due today
+    - Acceptance Criteria: Selecting Today displays tasks whose due date is today.
+    - Acceptance Criteria: Selecting Today excludes tasks due on dates other than today and tasks without due dates.
+    - Technical Requirement: Compare validated `dueDate` values with a local YYYY-MM-DD representation of the current date.
+    - Technical Requirement: Add frontend tests with a fixed current date for matching, nonmatching, and undated tasks.
+  - Story: Show overdue tasks
+    - Acceptance Criteria: Selecting Overdue displays tasks whose due date is before today.
+    - Acceptance Criteria: Selecting Overdue excludes tasks due today, tasks due in the future, and tasks without due dates.
+    - Technical Requirement: Define overdue as a valid `dueDate` earlier than the current local date.
+    - Technical Requirement: Reuse one overdue predicate for filtering, highlighting, and sorting.
+    - Technical Requirement: Add fixed-date tests covering past, current, future, invalid, and absent due dates.
+- Epic: Local Task Storage
+  - Story: Keep task data in local storage
+    - Acceptance Criteria: Task data remains available locally after the app is reloaded.
+    - Acceptance Criteria: Task data is not sent to a backend or external storage service.
+    - Technical Requirement: Replace task CRUD fetch calls in `App` and `TaskList` with a centralized browser `localStorage` repository.
+    - Technical Requirement: Persist the complete frontend task model, including stable client-generated IDs, title, description, dueDate, priority, and completed state, after every mutation.
+    - Technical Requirement: Load stored tasks during frontend initialization and fall back to an empty collection when stored data is absent or malformed.
+    - Technical Requirement: Do not add or modify Express routes, the SQLite schema, or backend tests for this feature; the existing backend must not receive task data from the updated frontend.
+    - Technical Requirement: Replace MSW API mocks in the frontend tests with isolated `localStorage` setup and cleanup.
+
+# Post-MVP
+
+- Epic: Overdue Task Visibility
+  - Story: Visually highlight overdue tasks
+    - Acceptance Criteria: A task with a due date before today is visually distinguishable from tasks that are not overdue.
+    - Acceptance Criteria: Tasks due today, due in the future, or without a due date are not highlighted as overdue.
+    - Technical Requirement: Apply an overdue-specific Material UI style to the existing `TaskList` item when the shared overdue predicate returns true.
+    - Technical Requirement: Keep the overdue state distinguishable from the existing completed-task styling.
+    - Technical Requirement: Add component tests that verify the overdue style is applied only to overdue tasks.
+- Epic: Task Sorting
+  - Story: Sort overdue tasks first
+    - Acceptance Criteria: Overdue tasks appear before tasks that are not overdue.
+    - Technical Requirement: Implement a shared task comparator whose first comparison places overdue tasks before non-overdue tasks.
+    - Technical Requirement: Sort a copied task array so the persisted task order is not mutated.
+  - Story: Sort tasks by priority
+    - Acceptance Criteria: Within the same overdue status, tasks are ordered P1, then P2, then P3.
+    - Technical Requirement: Add a priority rank map of P1 to 1, P2 to 2, and P3 to 3 in the shared comparator.
+    - Technical Requirement: Compare priority only after two tasks have the same overdue status.
+  - Story: Sort tasks by ascending due date
+    - Acceptance Criteria: Within the same overdue status and priority, tasks with earlier due dates appear before tasks with later due dates.
+    - Technical Requirement: Compare valid ISO due dates in ascending order after overdue status and priority are equal.
+    - Technical Requirement: Preserve the original relative order when all defined sort fields are equal.
+  - Story: Place undated tasks last
+    - Acceptance Criteria: Tasks without due dates appear after tasks with due dates.
+    - Technical Requirement: Treat absent or invalid due dates as undated and place them after dated tasks in the shared comparator.
+    - Technical Requirement: Add unit tests for the complete comparator precedence: overdue status, priority, due date, and undated placement.
