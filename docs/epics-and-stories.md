@@ -1,4 +1,8 @@
-# MVP
+# Epics and Stories
+
+Each story includes Acceptance Criteria and Technical Requirements.
+
+## MVP
 
 - Epic: Task Due Dates
   - Story: Add optional due dates to tasks
@@ -63,7 +67,7 @@
     - Technical Requirement: Do not add or modify Express routes, the SQLite schema, or backend tests for this feature; the existing backend must not receive task data from the updated frontend.
     - Technical Requirement: Replace MSW API mocks in the frontend tests with isolated `localStorage` setup and cleanup.
 
-# Post-MVP
+## Post-MVP
 
 - Epic: Overdue Task Visibility
   - Story: Visually highlight overdue tasks
