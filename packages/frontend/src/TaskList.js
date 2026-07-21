@@ -6,6 +6,9 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import EventIcon from '@mui/icons-material/Event';
 
+const PRIORITIES = ['P1', 'P2', 'P3'];
+const PRIORITY_SELECTED_COLOR = '#07F2E6';
+
 function TaskList({ onEdit }) {
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -203,6 +206,18 @@ function TaskList({ onEdit }) {
                 gap: 1
               }}
             >
+              <Chip
+                label={PRIORITIES.includes(task.priority) ? task.priority : 'P3'}
+                size="small"
+                data-testid={`priority-badge-${task.id}`}
+                sx={{
+                  height: 20,
+                  fontSize: '0.7rem',
+                  fontWeight: 600,
+                  backgroundColor: PRIORITY_SELECTED_COLOR,
+                  color: '#ffffff'
+                }}
+              />
               {task.due_date && (
                 <Chip
                   icon={<EventIcon sx={{ fontSize: 14 }} />}

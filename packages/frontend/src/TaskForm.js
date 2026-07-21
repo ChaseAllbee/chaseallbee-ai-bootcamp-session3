@@ -1,12 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { TextField, Button, Paper, Typography, Box } from '@mui/material';
+import { TextField, Button, Paper, Typography, Box, ToggleButton, ToggleButtonGroup } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import SaveIcon from '@mui/icons-material/Save';
+
+const PRIORITIES = ['P1', 'P2', 'P3'];
+const PRIORITY_UNSELECTED_COLOR = '#7A7A7A';
+const PRIORITY_SELECTED_COLOR = '#07F2E6';
 
 function TaskForm({ onSave, initialTask }) {
   const [title, setTitle] = useState(initialTask?.title || '');
   const [description, setDescription] = useState(initialTask?.description || '');
   const [dueDate, setDueDate] = useState(initialTask?.due_date || '');
+  const [priority, setPriority] = useState(
+    PRIORITIES.includes(initialTask?.priority) ? initialTask.priority : 'P3'
+  );
   const [error, setError] = useState(null);
 
   // Helper to normalize date string to YYYY-MM-DD format
@@ -30,10 +37,12 @@ function TaskForm({ onSave, initialTask }) {
       setTitle(initialTask.title || '');
       setDescription(initialTask.description || '');
       setDueDate(normalizeDateString(initialTask.due_date));
+      setPriority(PRIORITIES.includes(initialTask.priority) ? initialTask.priority : 'P3');
     } else {
       setTitle('');
       setDescription('');
       setDueDate('');
+      setPriority('P3');
     }
   }, [initialTask]);
 
@@ -44,10 +53,18 @@ function TaskForm({ onSave, initialTask }) {
       return;
     }
     setError(null);
-    await onSave({ title, description, due_date: dueDate });
+    await onSave({ title, description, due_date: dueDate, priority });
     setTitle('');
     setDescription('');
     setDueDate('');
+    setPriority('P3');
+  };
+
+  const handlePriorityChange = (e, newPriority) => {
+    // Ignore deselection so the group always behaves like a radio button
+    if (newPriority !== null) {
+      setPriority(newPriority);
+    }
   };
 
   return (
@@ -143,6 +160,52 @@ function TaskForm({ onSave, initialTask }) {
             }
           }}
         />
+        <Box>
+          <Typography
+            variant="body2"
+            sx={{ color: '#616161', fontWeight: 500, mb: 0.5 }}
+          >
+            Priority
+          </Typography>
+          <ToggleButtonGroup
+            value={priority}
+            exclusive
+            onChange={handlePriorityChange}
+            aria-label="Task priority"
+            data-testid="priority-toggle-group"
+            size="small"
+          >
+            {PRIORITIES.map((p) => (
+              <ToggleButton
+                key={p}
+                value={p}
+                data-testid={`priority-option-${p}`}
+                aria-label={p}
+                sx={{
+                  color: '#ffffff',
+                  fontWeight: 600,
+                  backgroundColor: PRIORITY_UNSELECTED_COLOR,
+                  borderColor: PRIORITY_UNSELECTED_COLOR,
+                  '&:hover': {
+                    backgroundColor: PRIORITY_UNSELECTED_COLOR,
+                    opacity: 0.85,
+                  },
+                  '&.Mui-selected': {
+                    color: '#ffffff',
+                    backgroundColor: PRIORITY_SELECTED_COLOR,
+                    borderColor: PRIORITY_SELECTED_COLOR,
+                  },
+                  '&.Mui-selected:hover': {
+                    backgroundColor: PRIORITY_SELECTED_COLOR,
+                    opacity: 0.85,
+                  },
+                }}
+              >
+                {p}
+              </ToggleButton>
+            ))}
+          </ToggleButtonGroup>
+        </Box>
         {error && <Typography color="error" sx={{ fontWeight: 500, fontSize: '0.875rem' }}>{error}</Typography>}
         <Box display="flex" gap={2}>
           <Button 

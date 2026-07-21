@@ -34,6 +34,7 @@ const server = setupServer(
         title,
         description: req.body.description || '',
         due_date: req.body.due_date || null,
+        priority: req.body.priority || 'P3',
         completed: 0,
       })
     );
@@ -148,6 +149,59 @@ describe('TODO App', () => {
     });
     await waitFor(() => {
       expect(screen.getByText('No tasks found.')).toBeInTheDocument();
+    });
+  });
+
+  test('defaults new task priority to P3', async () => {
+    let capturedBody;
+    server.use(
+      rest.get('/api/tasks', (req, res, ctx) => {
+        return res(ctx.status(200), ctx.json([]));
+      }),
+      rest.post('/api/tasks', async (req, res, ctx) => {
+        capturedBody = req.body;
+        return res(
+          ctx.status(201),
+          ctx.json({ id: 4, ...req.body, completed: 0 })
+        );
+      })
+    );
+    const user = userEvent.setup();
+    await act(async () => {
+      render(<App />);
+    });
+    expect(screen.getByTestId('priority-option-P3')).toHaveAttribute('aria-pressed', 'true');
+    await user.type(screen.getByTestId('title-input'), 'Default priority task');
+    await user.click(screen.getByTestId('submit-task'));
+    await waitFor(() => {
+      expect(capturedBody.priority).toBe('P3');
+    });
+  });
+
+  test('allows selecting a different priority before submitting', async () => {
+    let capturedBody;
+    server.use(
+      rest.get('/api/tasks', (req, res, ctx) => {
+        return res(ctx.status(200), ctx.json([]));
+      }),
+      rest.post('/api/tasks', async (req, res, ctx) => {
+        capturedBody = req.body;
+        return res(
+          ctx.status(201),
+          ctx.json({ id: 5, ...req.body, completed: 0 })
+        );
+      })
+    );
+    const user = userEvent.setup();
+    await act(async () => {
+      render(<App />);
+    });
+    await user.click(screen.getByTestId('priority-option-P1'));
+    expect(screen.getByTestId('priority-option-P1')).toHaveAttribute('aria-pressed', 'true');
+    await user.type(screen.getByTestId('title-input'), 'High priority task');
+    await user.click(screen.getByTestId('submit-task'));
+    await waitFor(() => {
+      expect(capturedBody.priority).toBe('P1');
     });
   });
 });
